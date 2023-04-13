@@ -1,0 +1,249 @@
+\documentclass [12pt]{article}
+
+
+\usepackage{ucs}
+\usepackage[utf8x]{inputenc} %Поддержка UTF8
+\usepackage{cmap} % Улучшенный поиск русских слов в полученном pdf-файле
+\usepackage[english,russian]{babel} %Пакет для поддержки русского и английского языка
+\usepackage{graphicx} %Поддержка графиков
+\usepackage{float} %Поддержка float-графиков
+\usepackage[left=20mm,right=15mm, top=20mm,bottom=20mm,bindingoffset=0cm]{geometry}
+\usepackage{mathtools} 
+\usepackage{setspace,amsmath}
+\usepackage{amsmath,amssymb}
+\usepackage{dsfont}
+\renewcommand{\baselinestretch}{1.2}
+ 
+\usepackage{color} 
+\definecolor{deepblue}{rgb}{0,0,0.5}
+\definecolor{deepred}{rgb}{0.6,0,0}
+\definecolor{deepgreen}{rgb}{0,0.5,0}
+
+\DeclareFixedFont{\ttb}{T1}{txtt}{bx}{n}{12} % for bold
+\DeclareFixedFont{\ttm}{T1}{txtt}{m}{n}{12}  % for normal
+
+\usepackage{listings}
+ 
+\lstset{
+	language=Python,
+	basicstyle=\ttm,
+	otherkeywords={self},             % Add keywords here
+	keywordstyle=\ttb\color{deepblue},
+	emph={MyClass,__init__},          % Custom highlighting
+	emphstyle=\ttb\color{deepred},    % Custom highlighting style
+	stringstyle=\color{deepgreen},
+	frame=tb,                         % Any extra options here
+	showstringspaces=false            % 
+}
+ 
+\usepackage{hyperref}
+ 
+\hypersetup{
+    bookmarks=true,         % show bookmarks bar?
+    unicode=false,          % non-Latin characters in Acrobat’s bookmarks
+    pdftoolbar=true,        % show Acrobat’s toolbar?
+    pdfmenubar=true,        % show Acrobat’s menu?
+    pdffitwindow=false,     % window fit to page when opened
+    pdfstartview={FitH},    % fits the width of the page to the window
+    pdftitle={My title},    % title
+    pdfauthor={Author},     % author
+    pdfsubject={Subject},   % subject of the document
+    pdfcreator={Creator},   % creator of the document
+    pdfproducer={Producer}, % producer of the document
+    pdfkeywords={keyword1} {key2} {key3}, % list of keywords
+    pdfnewwindow=true,      % links in new PDF window
+    colorlinks=true,       % false: boxed links; true: colored links
+    linkcolor=black,          % color of internal links (change box color with linkbordercolor)
+    citecolor=green,        % color of links to bibliography
+    filecolor=magenta,      % color of file links
+    urlcolor=cyan           % color of external links
+}
+
+\title{}
+\date{}
+\author{}
+
+\begin{document}
+\begin{titlepage}
+\thispagestyle{empty}
+\begin{center}
+Федеральное государственное бюджетное образовательное учреждение высшего профессионального образования \\Московский государственный технический университет имени Н.Э. Баумана
+
+\end{center}
+\vfill
+\centerline{\large{Лабораторная работа №5}}
+\centerline{\large{по курсу <<Численные методы>>}}
+\centerline{\large{<<Метод наименьших квадратов. Аппроксимация алгебраическими многочленами>>}}
+\vfill
+\hfill\parbox{5cm} {
+           Выполнил:\\
+           студент группы ИУ9-62Б \hfill \\
+           Головкин Дмитрий\hfill \medskip\\
+           Проверила:\\
+           Домрачева А.Б.\hfill
+       }
+\centerline{Москва, 2023}
+\clearpage
+\end{titlepage}
+
+\textsc{\textbf{Цель:}} 
+
+Анализ метода метода наименьших квадратов для решения задачи аппроксимации.
+
+\textsc{\textbf{Постановка задачи:}} 
+
+\textbf{Дано:}  Функция $y_i = \f(x_i),  i = \overline{0,n}$ задана таблично, исходные данные включают ошибки измерения.
+
+\begin{table}[h]
+\begin{center}
+\begin{tabular}{|c|c|c|c|c|}
+\hline
+$x_1$ & $x_2$ & ... & $x_{n-1}$ & $x_n$ \\
+\hline
+$y_1$ & $y_2$ & ... & $y_{n-1}$ & $y_n$ \\
+\hline
+\end{tabular}
+\end{center}
+\end{table}
+
+\textbf{Найти:} Гладкую аналитическую функцию  $z(x)$, доставляющую наименьшее значение величине $$ MSE=\sqrt[2]{\sum\limits_{i = 0}^n{(z(x_i) - y_i)^2}}$$ Эту величину называют среднеквадратичным уклонением функции $z(x)$ от системы узлов. Описанный подход к решению задачи приближения функции - методом наименьших квадратов.
+
+\textbf{Тестовый пример:} 
+
+Зададим некоторую функцию $f(x) = y$. Представим значения в виде таблицы:
+
+\begin{table}[h]
+\begin{center}
+\begin{tabular}{|c|c|c|c|c|c|c|c|c|c|}
+\hline
+1 & 1.5 & 2 & 2.5 & 3 & 3.5 & 4 & 4.5 & 5\\
+\hline
+0.16 & 0.68 & 1.96 & 2.79 & 3.80 & 6.81 & 9.50 & 15.60 & 24.86\\
+\hline
+\end{tabular}
+\end{center}
+\end{table}
+
+\textbf{Описание метода:}
+
+Как правило, $z(x)$ отыскивают в виде линейной комбинации заданных функций $$ z(x) = \lambda_{1}\phi_{1}(x) + ... + \lambda_m\phi_m(x) $$
+Параметры $\lambda_i, i = \overline{1,m}$ являются решениями линейной системы наименьших квадратов $$ A\lambda = b $$,
+где $\lambda$ - столбец параметров $\lambda_i$ . $A = (a_ij)$ - симметричная положительно определенная матрица (матрица Грама) с коэффициентами $ a_ij = \sum\limits_{k = 0}^n{\phi_i(x_i)\phi_j(x_k)}$; b - столбец правой части системы, $ b_i = \sum\limits_{k = 0}^n{\phi_i(x_k)y_k}, \quad i,j = \overline{1,m} $
+
+
+Если приближаемая функция достаточно глабкая, хотя вид ее и неизвестен, аппроксимирующую функцию нередко ищут в виде алгебраического многочлена $$ z(x) = \lambda_{1} + \lambda_{2}x + ... + \lambda_{m}x^(m-1) $$.
+Тогда $\phi_i = x^(i-1)$ и элементы матрица Грама получают по формулам $$ a_ij = \sum\limits_{k = 0}^n{x_{k}^(i + j - 2)}$$,
+а свободные члены - $$b_i = \sum\limits_{k = 0}^n{y_{k}^(i - 1)}, \quad i, j = \overline{1,m} $$
+
+Абсолютной погрешностью аппроксимации служит среднеквадратичное отклонение (СКО): $$ \Delta = \frac{MSE}{\sqrt[2]{n}} = \frac{1}{\sqrt[2]{n}}\sqrt[2]{\sum\limits_{k = 0}^n{(y_k - \lambda_{1} - \lambda_{2}x_k - ... -\lambda_{m}x_{k}^(m-1))^2}} $$, 
+относительная ошибка $$ \delta = \frac{\Delta}{||y||} = \frac{\Delta}{\sqrt[2]{\sum\limits_{k = 0}^n{y_{k}^2}}} $$
+
+\textsc{\textbf{Практическая реализация:}}
+Листинг 1. Аппроксимация функции многочленом 3 степени
+\begin{lstlisting}[language=python]
+#!python
+# -*- coding: utf-8 -*-
+import numpy as np
+
+def func(x):
+    return x**2 + np.exp(x)
+
+x = np.array([1,1.5,2,2.5,3,3.5,4,4.5,5])
+y = np.array([0.16, 0.68, 1.96, 2.79, 3.80, 6.81, 9.50, 15.60, 24.86])
+y = func(x)
+n = len(x)
+m = 4
+
+a = np.array([[sum(x**(i + j - 2)) for j in range(1,m+1)] for i in range(1,m+1)])
+a
+
+b = np.array([sum(y*x**(i - 1)) for i in range(1,m+1)])
+b
+
+lambd = np.dot(np.linalg.inv(a), b)
+lambd
+
+x_help = np.array([x**i for i in range(m)])
+x_help = np.array([sum(-lambd*[x[j]**i for i in range(m)]) for j in range(n)])
+x_help
+
+delta = 1 / np.sqrt(n) * np.sqrt(sum((y + x_help)**2))
+delta
+
+sigma = delta / np.sqrt(np.sum(y**2))
+sigma
+
+x_inner = (x[:-1] + x[1:]) / 2
+z = [sum(lambd*[x_in**i for i in range(m)]) for x_in in x_inner]
+z
+
+import matplotlib.pyplot as plt
+fig, ax = plt.subplots(figsize= (10,8))
+ax.plot(x, y, label='true')
+ax.plot(x_inner, z, label='aprox')
+ax.legend()
+
+\end{lstlisting}
+\textbf{Результаты:}
+
+Для тестирования полученной программы была задана функция $\phi(x) = exp(x)$. Представим её в виде таблицы:
+
+\begin{table}[h]
+\begin{center}
+\begin{tabular}{|c|c|c|c|c|c|c|c|c|c|c|}
+\hline
+0.0 & 0.055 & 0.111 & 0.166 & 0.222 & 0.277 & 0.333 & 0.388 & 0.444 & 0.5\\
+\hline
+1.0 & 1.057 & 1.117 & 1.181 & 1.248 & 1.320 & 1.395 & 1.475 & 1.559 & 1.648\\
+\hline
+\end{tabular}
+\end{center}
+\end{table}
+
+\begin{table}[h]
+\begin{center}
+\begin{tabular}{|c|c|c|c|c|c|c|c|c|}
+\hline
+0.555 & 0.611 & 0.666 & 0.722 & 0.777 & 0.833 & 0.888 & 0.944 & 1.0 \\
+\hline
+1.742 & 1.842 & 1.947 & 2.059 & 2.176 & 2.300 & 2.432 & 2.571 & 2.718 \\
+\hline
+\end{tabular}
+\end{center}
+\end{table}
+
+В результате работы программы (Листинг 1) получаем значения:
+
+\begin{center}
+\begin{tabular}{ |c|c|c|c| }
+  \hline
+ Значение $x_{n}$ & Значение $y_{n}$ & Значение сплайна $s^{3}(x_n)$ & Разница значений  $s^{3}(x_n)-y_{n}$ \\ \hline
+ 0.0 & 1.0 & 1.0 & 0.0\\ \hline
+ 0.055 & 1.057 & 1.0575984147738515 & 0.0004706700136150044\\ \hline
+ 0.111 & 1.117 & 1.1175190687418637 & 0.0\\ \hline
+ 0.166 & 1.181 & 1.181233576490805 & 0.00012683637484078858\\ \hline
+ 0.222 & 1.248 & 1.2488488690016821 & 0.0\\ \hline
+ 0.277 & 1.320 & 1.3202266534113838 & 3.386497726354243e-05\\ \hline
+ 0.333 & 1.395 & 1.3956124250860895 & 0.0\\ \hline
+ 0.388 & 1.475 & 1.475328851159584 & 1.1764331038222053e-05\\ \hline
+ 0.444 & 1.559 & 1.5596234976067807 & 0.0\\ \hline
+ 0.5 & 1.648 & 1.6487309531466745 & 9.682446546310786e-06\\ \hline
+ 0.555 & 1.742 & 1.7429089986334578 & 0.0\\ \hline
+ 0.611 & 1.842 & 1.8424465712119993 & 3.0887835709814127e-05\\ \hline
+ 0.666 & 1.947 & 1.9477340410546755 & 2.220446049250313e-16\\ \hline
+ 0.722 & 2.059 & 2.0591131797740907 & 0.00010948556121936903\\ \hline
+ 0.777 & 2.176 & 2.176629931716248 & 0.0\\ \hline
+ 0.833 & 2.300 & 2.3005639380231275 & 0.00041195286969708533\\ \hline
+ 0.888 & 2.432 & 2.4324254542872077 & 0.0\\ \hline
+ 0.944 & 2.571 & 2.57291728658255 &  0.0015328517945203401\\ \hline
+ 1.0 & 2.718 & 2.718281828459045 & 0.0\\ \hline
+\end{tabular}
+\end{center}
+
+\textbf{Выводы:}
+
+В ходе выполнения лабораторной работы был рассмотрен метод интерполяции функции, основанный на построении кубического сплайна в контрольных точках, так же для метода была написана реализация на языке программирования Python.
+
+Анализируя результаты полученной программы, можно заметить то, что метод интерполяции функции, основанный на построении кубического в контрольных точках, имеет высокую точность вследствие низкой погрешности. Повышая степень кусочно-интерполяционного многочлена, можно добиться еще лучших результатов аппроксимации функции.
+
+\end{document}
